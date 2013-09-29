@@ -5,10 +5,10 @@
 
 package com.spartacusrex.spartacuside;
 
-import com.spartacusrex.spartacuside.startup.introscreen;
+import com.spartacusrex.spartacuside.startup.Introscreen;
 
 /**
  *
  * @author Spartacus Rex
  */
-public class Start extends introscreen{}
+public class Start extends Introscreen{}

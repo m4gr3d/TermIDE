@@ -30,7 +30,7 @@ import com.spartacusrex.spartacuside.startup.tutorial.tutlist;
  *
  * @author Spartacus Rex
  */
-public class introscreen extends Activity implements OnClickListener{
+public class Introscreen extends Activity implements OnClickListener{
 
     Dialog mConfirmDialog;
     Dialog mInstallDialog;
@@ -86,7 +86,7 @@ public class introscreen extends Activity implements OnClickListener{
         build.setPositiveButton("Show me", new android.content.DialogInterface.OnClickListener() {
             public void onClick(DialogInterface arg0, int arg1) {
                 //Install the system
-                startActivity(new Intent(introscreen.this, installer.class));
+                startActivity(new Intent(Introscreen.this, installer.class));
                 
                 mConfirmDialog.dismiss();
             }
@@ -94,7 +94,7 @@ public class introscreen extends Activity implements OnClickListener{
         build.setNegativeButton("Later", new android.content.DialogInterface.OnClickListener() {
             public void onClick(DialogInterface arg0, int arg1) {
                 //Start the Terminal
-                startActivity(new Intent(introscreen.this, Term.class));
+                startActivity(new Intent(Introscreen.this, Term.class));
 
                 mConfirmDialog.dismiss();
             }
@@ -118,7 +118,7 @@ public class introscreen extends Activity implements OnClickListener{
                 mInstallDialog.show();
             }else{
                 //Start the Terminal
-                startActivity(new Intent(introscreen.this, Term.class));
+                startActivity(new Intent(Introscreen.this, Term.class));
             }
 
         }else if(zButton == findViewById(R.id.main_stop)){

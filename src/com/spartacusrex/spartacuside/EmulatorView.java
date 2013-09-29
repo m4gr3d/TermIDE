@@ -42,6 +42,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.CompletionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
@@ -51,8 +52,8 @@ import android.view.inputmethod.InputMethodManager;
 
 import com.spartacusrex.spartacuside.model.TextRenderer;
 import com.spartacusrex.spartacuside.model.UpdateCallback;
-import com.spartacusrex.spartacuside.session.TerminalEmulator;
 import com.spartacusrex.spartacuside.session.TermSession;
+import com.spartacusrex.spartacuside.session.TerminalEmulator;
 import com.spartacusrex.spartacuside.session.TranscriptScreen;
 import com.spartacusrex.spartacuside.util.TermSettings;
 import com.spartacusrex.spartacuside.util.hardkeymappings;
@@ -185,6 +186,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
      */
     private Runnable mCheckSize = new Runnable() {
 
+        @Override
         public void run() {
             updateSize(false);
             mHandler.postDelayed(this, SCREEN_CHECK_PERIOD);
@@ -192,6 +194,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
     };
 
     private Runnable mBlinkCursor = new Runnable() {
+        @Override
         public void run() {
             if (mCursorBlink != 0) {
                 mCursorVisible = ! mCursorVisible;
@@ -224,6 +227,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
      * Called by the TermSession when the contents of the view need updating
      */
     private UpdateCallback mUpdateNotify = new UpdateCallback() {
+        @Override
         public void onUpdate() {
             if ( mIsSelectingText ) {
                 int rowShift = mEmulator.getScrollCounter();
@@ -302,7 +306,8 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
         outAttrs.inputType = mUseCookedIme ?
                 EditorInfo.TYPE_CLASS_TEXT :
                 EditorInfo.TYPE_NULL;
-        return new InputConnection() {
+
+        return new BaseInputConnection(this, true) {
             private boolean mInBatchEdit;
             /**
              * Used to handle composing text requests
@@ -338,7 +343,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 int result = mKeyListener.mapControlChar(c);
                 if (result < TermKeyListener.KEYCODE_OFFSET) {
 //                    Log.v("SpartacusRex","EMVIEW : 1) mapAndSend "+c+" "+result);
-                    
+
                     //Check for ALT
                     //if(mAl)
 
@@ -350,6 +355,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 }
             }
 
+            @Override
             public boolean beginBatchEdit() {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "beginBatchEdit");
@@ -362,6 +368,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public boolean clearMetaKeyStates(int arg0) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "clearMetaKeyStates " + arg0);
@@ -369,6 +376,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return false;
             }
 
+            @Override
             public boolean commitCompletion(CompletionInfo arg0) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "commitCompletion " + arg0);
@@ -376,6 +384,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return false;
             }
 
+            @Override
             public boolean endBatchEdit() {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "endBatchEdit");
@@ -384,6 +393,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public boolean finishComposingText() {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "finishComposingText");
@@ -396,6 +406,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public int getCursorCapsMode(int arg0) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "getCursorCapsMode(" + arg0 + ")");
@@ -403,6 +414,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return 0;
             }
 
+            @Override
             public ExtractedText getExtractedText(ExtractedTextRequest arg0,
                     int arg1) {
                 if (TermDebug.LOG_IME) {
@@ -411,6 +423,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return null;
             }
 
+            @Override
             public CharSequence getTextAfterCursor(int n, int flags) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "getTextAfterCursor(" + n + "," + flags + ")");
@@ -422,6 +435,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return mImeBuffer.substring(mCursor, mCursor + len);
             }
 
+            @Override
             public CharSequence getTextBeforeCursor(int n, int flags) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "getTextBeforeCursor(" + n + "," + flags + ")");
@@ -433,6 +447,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return mImeBuffer.substring(mCursor-len, mCursor);
             }
 
+            @Override
             public boolean performContextMenuAction(int arg0) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "performContextMenuAction" + arg0);
@@ -440,6 +455,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public boolean performPrivateCommand(String arg0, Bundle arg1) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "performPrivateCommand" + arg0 + "," + arg1);
@@ -447,6 +463,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public boolean reportFullscreenMode(boolean arg0) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "reportFullscreenMode" + arg0);
@@ -461,6 +478,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
 //                return true;
 //            }
 
+            @Override
             public boolean commitText(CharSequence text, int newCursorPosition) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "commitText(\"" + text + "\", " + newCursorPosition + ")");
@@ -485,6 +503,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 mComposingTextEnd = mComposingTextStart = 0;
             }
 
+            @Override
             public boolean deleteSurroundingText(int leftLength, int rightLength) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "deleteSurroundingText(" + leftLength +
@@ -504,6 +523,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public boolean performEditorAction(int actionCode) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "performEditorAction(" + actionCode + ")");
@@ -515,6 +535,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public boolean sendKeyEvent(KeyEvent event) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "sendKeyEvent(" + event + ")");
@@ -527,6 +548,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public boolean setComposingText(CharSequence text, int newCursorPosition) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "setComposingText(\"" + text + "\", " + newCursorPosition + ")");
@@ -539,6 +561,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public boolean setSelection(int start, int end) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "setSelection" + start + "," + end);
@@ -555,6 +578,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public boolean setComposingRegion(int start, int end) {
                 if (TermDebug.LOG_IME) {
                     Log.w(TAG, "setComposingRegion " + start + "," + end);
@@ -567,6 +591,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public CharSequence getSelectedText(int flags) {
 
                 try {
@@ -582,7 +607,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                     return mImeBuffer.substring(mSelectedTextStart, mSelectedTextEnd + 1);
 
                 } catch (Exception e) {
-                    
+
                 }
 
                 return "";
@@ -612,10 +637,12 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
         mGestureDetector = new GestureDetector(this);
         // mGestureDetector.setIsLongpressEnabled(false);
         mGestureDetector.setOnDoubleTapListener(new GestureDetector.OnDoubleTapListener() {
+            @Override
             public boolean onSingleTapConfirmed(MotionEvent arg0) {
                return true;
             }
 
+            @Override
             public boolean onDoubleTap(MotionEvent arg0) {
                 //Toggle the Soft Keyboard..
                 InputMethodManager imm = (InputMethodManager)getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -623,6 +650,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 return true;
             }
 
+            @Override
             public boolean onDoubleTapEvent(MotionEvent arg0) {
                 return true;
             }
@@ -728,14 +756,17 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
 
     // Begin GestureDetector.OnGestureListener methods
 
+    @Override
     public boolean onSingleTapUp(MotionEvent e) {
         return true;
     }
 
+    @Override
     public void onLongPress(MotionEvent e) {
         showContextMenu();
     }
 
+    @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2,
             float distanceX, float distanceY) {
         distanceY += mScrollRemainder;
@@ -767,6 +798,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
     }
 
 
+    @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
             float velocityY) {
         if (Math.abs(velocityX) > Math.abs(velocityY)) {
@@ -792,9 +824,11 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
         return true;
     }
 
+    @Override
     public void onShowPress(MotionEvent e) {
     }
 
+    @Override
     public boolean onDown(MotionEvent e) {
         mScrollRemainder = 0.0f;
         return true;
@@ -913,7 +947,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
         if (handleControlKey(keyCode, false)) {
             return true;
         } else if (handleFnKey(keyCode, false)) {
-            mKeyListener.keyUp(TermKeyListener.KEYCODE_ESCAPE);   
+            mKeyListener.keyUp(TermKeyListener.KEYCODE_ESCAPE);
             return true;
         } else if (isSystemKey(keyCode, newevent)) {
             // Don't intercept the system keys
@@ -947,7 +981,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                     //Just Update the Function Key Settings
                     mKeyListener.handleFunctionKey(false);
                     return null;
-                
+
                 }else if(hardmap == hardkeymappings.HARDKEY_TAB){
                     newevent = new KeyEvent(zAction, TermKeyListener.KEYCODE_TAB);
 
@@ -1015,7 +1049,7 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
                 Log.w(TAG, "handleFnKey " + keyCode);
             }
             //if(down){
-                //Send the escape sequence..   
+                //Send the escape sequence..
             //}
             //mKeyListener.handleFnKey(down);
             return true;
@@ -1061,9 +1095,9 @@ public class EmulatorView extends View implements GestureDetector.OnGestureListe
     }
 
     private void updateSize(int w, int h) {
-        mColumns = Math.max(1, (int) (((float) w) / mCharacterWidth));
+        mColumns = Math.max(1, (int) ((w) / mCharacterWidth));
         mRows = Math.max(1, h / mCharacterHeight);
-        mVisibleColumns = (int) (((float) mVisibleWidth) / mCharacterWidth);
+        mVisibleColumns = (int) ((mVisibleWidth) / mCharacterWidth);
 
         mTermSession.updateSize(mColumns, mRows);
 
@@ -1202,14 +1236,17 @@ class Bitmap4x8FontRenderer extends BaseTextRenderer {
         mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
     }
 
+    @Override
     public float getCharacterWidth() {
         return kCharacterWidth;
     }
 
+    @Override
     public int getCharacterHeight() {
         return kCharacterHeight;
     }
 
+    @Override
     public void drawTextRun(Canvas canvas, float x, float y,
             int lineOffset, char[] text, int index, int count,
             boolean cursor, int foreColor, int backColor) {
@@ -1275,6 +1312,7 @@ class PaintRenderer extends BaseTextRenderer {
         mCharWidth = mTextPaint.measureText(EXAMPLE_CHAR, 0, 1);
     }
 
+    @Override
     public void drawTextRun(Canvas canvas, float x, float y, int lineOffset,
             char[] text, int index, int count,
             boolean cursor, int foreColor, int backColor) {
@@ -1305,10 +1343,12 @@ class PaintRenderer extends BaseTextRenderer {
         }
     }
 
+    @Override
     public int getCharacterHeight() {
         return mCharHeight;
     }
 
+    @Override
     public float getCharacterWidth() {
         return mCharWidth;
     }
@@ -1964,7 +2004,7 @@ class TermKeyListener {
 
         public void adjustAfterKeypress() {
             mState = OFF;
-            
+
             /*switch (mState) {
             case PRESSED:
                 mState = USED;
@@ -2038,7 +2078,7 @@ class TermKeyListener {
         int result = ch;
         if (mControlKey.isActive()) {
 //            Log.v("SpartacusRex","mapControlChar CONTROL ON ");
-            
+
             // Search is the control key.
             if (result >= 'a' && result <= 'z') {
                 result = (char) (result - 'a' + '\001');
@@ -2076,7 +2116,7 @@ class TermKeyListener {
         } else if (mFunctionKey.isActive()) {
 
             if (result > '0' && result <= '9') {
-                int offs = (int)'1';
+                int offs = '1';
                 result = KEYCODE_OFFSET + TermKeyListener.KEYCODE_F1 + result - offs;
             } else if (result == '0') {
                 result = KEYCODE_OFFSET + TermKeyListener.KEYCODE_F10;
@@ -2215,7 +2255,7 @@ class TermKeyListener {
 
         if (result >= KEYCODE_OFFSET) {
             handleKeyCode(result - KEYCODE_OFFSET, out, appMode);
-            
+
         } else if (result >= 0) {
             //Check
             if(mAltKey.isActive()){
@@ -2251,7 +2291,7 @@ class TermKeyListener {
             }
 
             return true;
-            
+
         }else if (keyCode >= 0 && keyCode < mKeyCodes.length) {
             if (appMode) {
                 code = mAppKeyCodes[keyCode];
@@ -2279,7 +2319,7 @@ class TermKeyListener {
      */
     public void keyUp(int keyCode) {
 //        Log.v("SpartacusRex","EMVIEW : keyup "+keyCode);
-        
+
         switch (keyCode) {
 
         case -98:
