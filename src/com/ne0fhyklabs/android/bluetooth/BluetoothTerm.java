@@ -158,9 +158,11 @@ public class BluetoothTerm extends Fragment {
                 if ( count > before ) {
                     char currentChar = s.charAt(s.length() - 1);
                     mTermActivity.getBluetoothTermService().write(String.valueOf(currentChar).getBytes());
+					Log.d(TAG, "Term char: " + currentChar);
                 }
                 else if ( count < before ) {
                     mTermActivity.getBluetoothTermService().write(KeyEvent.KEYCODE_DEL);
+					Log.d(TAG, "Del character");
                 }
             }
 

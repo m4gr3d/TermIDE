@@ -34,6 +34,7 @@
             android:id="@+id/edit_text_out"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+			android:inputType="textVisiblePassword"
             android:layout_weight="1"
             android:layout_gravity="bottom" />
         <!-- <Button
