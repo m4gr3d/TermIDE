@@ -43,6 +43,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ne0fhyklabs.android.util.Constants;
+import com.ne0fhyklabs.android.util.Util;
 import com.ne0fhyklabs.android.view.BluetoothTermEditor;
 import com.spartacusrex.spartacuside.R;
 import com.spartacusrex.spartacuside.Term;
@@ -128,8 +129,16 @@ public class BluetoothTerm extends Fragment {
                 if ( mTermActivity == null )
                     return false;
 
+                if ( keyCode == KeyEvent.KEYCODE_BACK )
+                    return false;
+
+                String keyCodeString = Util.wrapKeyCode(keyCode);
+
                 for ( int i = 0; i < count; i++ )
-                    mTermActivity.getBluetoothTermService().write(keyCode);
+                    mTermActivity.getBluetoothTermService().write(keyCodeString);
+
+                if ( keyCode == KeyEvent.KEYCODE_DEL )
+                    return false;
                 return true;
             }
 
@@ -144,7 +153,13 @@ public class BluetoothTerm extends Fragment {
                 if ( mTermActivity == null )
                     return false;
 
-                mTermActivity.getBluetoothTermService().write(keyCode);
+                if ( keyCode == KeyEvent.KEYCODE_BACK )
+                    return false;
+
+                mTermActivity.getBluetoothTermService().write(Util.wrapKeyCode(keyCode));
+
+                if ( keyCode == KeyEvent.KEYCODE_DEL )
+                    return false;
                 return true;
             }
         });
@@ -157,13 +172,13 @@ public class BluetoothTerm extends Fragment {
 
                 if ( count > before ) {
                     char currentChar = s.charAt(s.length() - 1);
-                    mTermActivity.getBluetoothTermService().write(String.valueOf(currentChar).getBytes());
-					Log.d(TAG, "Term char: " + currentChar);
+                    mTermActivity.getBluetoothTermService().write(String.valueOf(currentChar));
                 }
-                else if ( count < before ) {
-                    mTermActivity.getBluetoothTermService().write(KeyEvent.KEYCODE_DEL);
-					Log.d(TAG, "Del character");
-                }
+                // else if ( count < before ) {
+                // mTermActivity.getBluetoothTermService().write(
+                // new StringBuilder(Constants.KEY_CODE_PREFIX).append(KeyEvent.KEYCODE_DEL)
+                // .toString().getBytes());
+                // }
             }
 
             @Override
@@ -259,8 +274,7 @@ public class BluetoothTerm extends Fragment {
         // Check that there's actually something to send
         if ( message.length() > 0 ) {
             // Get the message bytes and tell the BluetoothChatService to write
-            byte[] send = message.getBytes();
-            btService.write(send);
+            btService.write(message);
 
             // Reset out string buffer to zero and clear the edit text field
             mOutStringBuffer.setLength(0);
@@ -274,7 +288,12 @@ public class BluetoothTerm extends Fragment {
                 @Override
                 public boolean onEditorAction(TextView view, int actionId, KeyEvent event) {
                     // If the action is a key-up event on the return key, send the message
-                    if ( actionId == EditorInfo.IME_NULL && event.getAction() == KeyEvent.ACTION_UP ) {
+                    if ( actionId == EditorInfo.IME_NULL || actionId == EditorInfo.IME_ACTION_DONE ) {
+                        if ( actionId == EditorInfo.IME_ACTION_DONE ) {
+                            mTermActivity.getBluetoothTermService().write(
+                                    Util.wrapKeyCode(KeyEvent.KEYCODE_ENTER));
+                        }
+
                         String message = view.getText().toString();
                         // sendMessage(message + "\n");
                         mConversationArrayAdapter.add("btTerm:  " + message);

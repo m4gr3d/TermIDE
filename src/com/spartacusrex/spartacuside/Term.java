@@ -16,8 +16,18 @@
 
 package com.spartacusrex.spartacuside;
 
+import static com.ne0fhyklabs.android.util.Constants.MESSAGE_READ;
+import static com.ne0fhyklabs.android.util.Constants.MESSAGE_TOAST;
+import static com.ne0fhyklabs.android.util.Constants.TOAST;
+
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.regex.Matcher;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -26,8 +36,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.net.Uri;
@@ -57,14 +67,6 @@ import com.ne0fhyklabs.android.bluetooth.BluetoothTermService;
 import com.ne0fhyklabs.android.util.Constants;
 import com.spartacusrex.spartacuside.session.TermSession;
 import com.spartacusrex.spartacuside.util.TermSettings;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.nio.ByteBuffer;
-import java.util.Date;
-import java.util.Enumeration;
-
-import static com.ne0fhyklabs.android.util.Constants.*;
 
 /**
  * A terminal emulator activity.
@@ -88,7 +90,6 @@ public class Term extends Activity {
 
     // The handler that gets information back from the bluetoothTermService
     private final Handler mBtHandler = new Handler() {
-        private final ByteBuffer mByteBuffer = ByteBuffer.allocate(4);
 
         @Override
         public void handleMessage(Message msg) {
@@ -99,31 +100,50 @@ public class Term extends Activity {
                     break;
 
                 case MESSAGE_READ:
-                    byte[] readBuf = (byte[]) msg.obj;
-                    int byteCount = msg.arg1;
-                    if ( byteCount == 4 ) {
-                        // Chance are this is a keycode
-                        for ( int i = 0; i < byteCount; i++ ) {
-                            mByteBuffer.put(i, readBuf[i]);
+                    char[] readBuf = (char[]) msg.obj;
+
+                    // construct a string from the valid bytes in the buffer
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+
+                    if ( !readMessage.isEmpty() ) {
+                        final TermSession termSession = getCurrentTermSession();
+                        final Matcher matcher = Constants.KEY_CODE_PATTERN.matcher(readMessage);
+                        int subStringStart = 0;
+
+                        while (matcher.find()) {
+                            int matchStart = matcher.start();
+                            int matchEnd = matcher.end();
+
+                            String preMatch = readMessage.substring(subStringStart, matchStart);
+                            if ( termSession != null && !preMatch.isEmpty() ) {
+                                termSession.write(preMatch);
+                            }
+
+                            String keyCodeString = readMessage.substring(matchStart + 1, matchEnd - 1);
+                            try {
+                                int keycode = Integer.parseInt(keyCodeString);
+
+                                EmulatorView emulatorView = getCurrentEmulatorView();
+                                if ( emulatorView != null ) {
+                                    emulatorView.onKeyDown(keycode, new KeyEvent(KeyEvent.ACTION_DOWN,
+                                            keycode));
+                                    emulatorView.onKeyUp(keycode, new KeyEvent(KeyEvent.ACTION_UP, keycode));
+                                }
+                            } catch (NumberFormatException e) {
+                                Log.e(TAG, e.getMessage(), e);
+                            }
+
+                            subStringStart = matchEnd;
                         }
 
-                        int keycode = mByteBuffer.getInt(0);
-
-                        EmulatorView emulatorView = getCurrentEmulatorView();
-                        if ( emulatorView != null ) {
-                            emulatorView.onKeyDown(keycode, new KeyEvent(KeyEvent.ACTION_DOWN, keycode));
-                            emulatorView.onKeyUp(keycode, new KeyEvent(KeyEvent.ACTION_UP, keycode));
+                        String actualMsg = readMessage.substring(subStringStart);
+                        if ( termSession != null && !actualMsg.isEmpty() ) {
+                            // mConversationArrayAdapter.add(mConnectedDeviceName + ":  " +
+                            // readMessage);
+                            termSession.write(actualMsg);
                         }
                     }
-                    else {
-                        // construct a string from the valid bytes in the buffer
-                        String readMessage = new String(readBuf, 0, byteCount);
-                        // mConversationArrayAdapter.add(mConnectedDeviceName + ":  " +
-                        // readMessage);
-                        TermSession termSession = getCurrentTermSession();
-                        if ( termSession != null )
-                            termSession.write(readMessage);
-                    }
+
                     break;
 
                 default:

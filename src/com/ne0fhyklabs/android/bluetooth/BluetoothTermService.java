@@ -18,8 +18,9 @@ package com.ne0fhyklabs.android.bluetooth;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
+import java.io.OutputStreamWriter;
 import java.util.UUID;
 
 import com.ne0fhyklabs.android.util.Constants;
@@ -218,7 +219,7 @@ public class BluetoothTermService {
      * @param out The bytes to write
      * @see ConnectedThread#write(byte[])
      */
-    public void write(byte[] out) {
+    public void write(String out) {
         // Create temporary object
         ConnectedThread r;
         // Synchronize a copy of the ConnectedThread
@@ -228,19 +229,6 @@ public class BluetoothTermService {
         }
         // Perform the write unsynchronized
         r.write(out);
-    }
-
-    public void write(int keycode) {
-        // Create temporary object
-        ConnectedThread r;
-        // Synchronize a copy of the ConnectedThread
-        synchronized (this) {
-            if ( mState != STATE_CONNECTED )
-                return;
-            r = mConnectedThread;
-        }
-        // Perform the write unsynchronized
-        r.write(keycode);
     }
 
     /**
@@ -351,13 +339,13 @@ public class BluetoothTermService {
         public void cancel() {
             if (D) Log.d(TAG, "Socket Type" + mSocketType + "cancel " + this);
             try {
+                if ( mmServerSocket != null )
                 mmServerSocket.close();
             } catch (IOException e) {
                 Log.e(TAG, "Socket Type" + mSocketType + "close() of server failed", e);
             }
         }
     }
-
 
     /**
      * This thread runs while attempting to make an outgoing connection
@@ -439,10 +427,8 @@ public class BluetoothTermService {
      */
     private class ConnectedThread extends Thread {
         private final BluetoothSocket mmSocket;
-        private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
-
-        private final ByteBuffer mByteBuffer;
+        private final InputStreamReader mmInStream;
+        private final OutputStreamWriter mmOutStream;
 
         public ConnectedThread(BluetoothSocket socket, String socketType) {
             Log.d(TAG, "create ConnectedThread: " + socketType);
@@ -458,16 +444,15 @@ public class BluetoothTermService {
                 Log.e(TAG, "temp sockets not created", e);
             }
 
-            mmInStream = tmpIn;
-            mmOutStream = tmpOut;
+            mmInStream = new InputStreamReader(tmpIn);
+            mmOutStream = new OutputStreamWriter(tmpOut);
 
-            mByteBuffer = ByteBuffer.allocate(4);
         }
 
         @Override
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
-            byte[] buffer = new byte[1024];
+            char[] buffer = new char[1024];
             int bytes;
 
             // Keep listening to the InputStream while connected
@@ -493,7 +478,7 @@ public class BluetoothTermService {
          * Write to the connected OutStream.
          * @param buffer  The bytes to write
          */
-        public void write(byte[] buffer) {
+        public void write(String buffer) {
             try {
                 mmOutStream.write(buffer);
                 mmOutStream.flush();
@@ -504,11 +489,6 @@ public class BluetoothTermService {
             } catch (IOException e) {
                 Log.e(TAG, "Exception during write", e);
             }
-        }
-
-        public void write(int keycode) {
-            mByteBuffer.putInt(0, keycode);
-            write(mByteBuffer.array());
         }
 
         public void cancel() {

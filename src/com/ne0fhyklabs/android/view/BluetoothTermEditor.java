@@ -37,32 +37,32 @@ public class BluetoothTermEditor extends EditText {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if ( mKeyEventListener != null )
-            mKeyEventListener.onKeyDown(keyCode, event);
+        if ( mKeyEventListener != null && mKeyEventListener.onKeyDown(keyCode, event) )
+            return true;
 
         return super.onKeyDown(keyCode, event);
     }
 
     @Override
     public boolean onKeyLongPress(int keyCode, KeyEvent event) {
-        if ( mKeyEventListener != null )
-            mKeyEventListener.onKeyLongPress(keyCode, event);
+        if ( mKeyEventListener != null && mKeyEventListener.onKeyLongPress(keyCode, event) )
+            return true;
 
         return super.onKeyLongPress(keyCode, event);
     }
 
     @Override
     public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {
-        if ( mKeyEventListener != null )
-            mKeyEventListener.onKeyMultiple(keyCode, count, event);
+        if ( mKeyEventListener != null && mKeyEventListener.onKeyMultiple(keyCode, count, event) )
+            return true;
 
         return super.onKeyMultiple(keyCode, count, event);
     }
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if ( mKeyEventListener != null )
-            mKeyEventListener.onKeyUp(keyCode, event);
+        if ( mKeyEventListener != null && mKeyEventListener.onKeyUp(keyCode, event) )
+            return true;
 
         return super.onKeyUp(keyCode, event);
     }
